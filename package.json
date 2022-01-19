@@ -1,0 +1,13 @@
+{
+    "name": "@unifyned/grpc",
+    "version": "1.0.0",
+    "description": "",
+    "license": "reserverd",
+    "main": "./lib/index.js",
+    "devDependencies": {
+        "esbuild": "^0.14.10"
+    },
+    "scripts": {
+        "build": "node ./esbuild.mjs && tsc --emitDeclarationOnly"
+    }
+}
