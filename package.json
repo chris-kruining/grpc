@@ -1,13 +1,17 @@
 {
-    "name": "@unifyned/grpc",
+    "name": "@fyn-software/grpc",
     "version": "1.0.0",
     "description": "",
     "license": "reserverd",
     "main": "./lib/index.js",
     "devDependencies": {
+        "@types/google-protobuf": "^3.15.5",
         "esbuild": "^0.14.10"
     },
     "scripts": {
         "build": "node ./esbuild.mjs && tsc --emitDeclarationOnly"
+    },
+    "dependencies": {
+        "google-protobuf": "^3.19.3"
     }
 }
