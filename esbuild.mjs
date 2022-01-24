@@ -7,6 +7,7 @@ await build({
     bundle: true,
     sourcemap: true,
     minify: true,
-    format: 'cjs',
+    format: 'esm',
+    external: [ 'node:stream/web' ],
     target: [ 'esnext' ],
 });

@@ -1,5 +1,14 @@
 import { Message } from 'google-protobuf';
 
+if(typeof TransformStream === 'undefined')
+{
+    const { ReadableStream: Rs, WritableStream: Ws, TransformStream: Ts } = await import('node:stream/web');
+
+    global.ReadableStream = Rs as typeof ReadableStream;
+    global.WritableStream = Ws as unknown as typeof WritableStream;
+    global.TransformStream = Ts as unknown as typeof TransformStream;
+}
+
 export function asyncIterableToStream<T>(iterable: AsyncIterable<T>, signal?: AbortSignal): ReadableStream<T>
 {
     return new ReadableStream<T>({
@@ -30,6 +39,8 @@ export function asyncIterableToStream<T>(iterable: AsyncIterable<T>, signal?: Ab
         }
     })
 }
+
+new AbortController
 
 export async function *streamToAsyncIterable<T>(stream: ReadableStream<T>, signal?: AbortSignal): AsyncGenerator<T, void, undefined>
 {

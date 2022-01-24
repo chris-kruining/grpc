@@ -3,16 +3,23 @@
     "version": "1.0.0",
     "description": "",
     "license": "reserverd",
+    "type": "module",
     "main": "./lib/index.js",
-    "devDependencies": {
-        "@types/google-protobuf": "3.15.5",
-        "esbuild": "0.14.13",
-        "jasmine": "4.0.2"
-    },
     "scripts": {
-        "build": "node ./esbuild.mjs && tsc --emitDeclarationOnly"
+        "build": "node ./esbuild.mjs && tsc --emitDeclarationOnly",
+        "test": "jasmine"
     },
     "dependencies": {
         "google-protobuf": "^3.19.3"
+    },
+    "devDependencies": {
+        "@types/google-protobuf": "3.15.5",
+        "@types/jasmine": "^3.10.3",
+        "@types/node": "^17.0.10",
+        "esbuild": "0.14.12",
+        "jasmine": "^4.0.2"
+    },
+    "engines": {
+        "node": ">=17.4.0"
     }
 }
