@@ -6,7 +6,8 @@
     "main": "./lib/index.js",
     "devDependencies": {
         "@types/google-protobuf": "3.15.5",
-        "esbuild": "0.14.12"
+        "esbuild": "0.14.12",
+        "jasmine": "^4.0.2"
     },
     "scripts": {
         "build": "node ./esbuild.mjs && tsc --emitDeclarationOnly"
