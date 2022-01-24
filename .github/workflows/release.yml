@@ -79,6 +79,12 @@ jobs:
           git config --global user.name "Github actions"
           npm version ${{ steps.version.outputs.version }}
 
+      - name: Create Changelog
+        id: changelog
+        uses: mikepenz/release-changelog-builder-action@v1
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+
       - name: Zip project
         run: zip -r release.zip .
 
@@ -90,7 +96,7 @@ jobs:
           prerelease: false
           release_name: ${{ steps.version.outputs.version }}
           tag_name: ${{ steps.version.outputs.version }}
-          body_path: CHANGELOG.md
+          body: ${{ steps.changelog.outputs.changelog }}
         env:
           GITHUB_TOKEN: ${{ github.token }}
 
