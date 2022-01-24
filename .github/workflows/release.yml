@@ -111,6 +111,6 @@ jobs:
           asset_content_type: application/gzip
 
       - name: Publish code to NPM
-        run: npm publish ./release.zip --access=public
+        run: npm publish --access=public --registry=https://registry.npmjs.org
         env:
-          NODE_AUTH_TOKEN: ${{secrets.npm_token}}
+          NODE_AUTH_TOKEN: ${{ secrets.npm_token }}
