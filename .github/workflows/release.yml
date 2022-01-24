@@ -38,8 +38,8 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [ ubuntu-latest, macos-latest ]
-        node_version: [ 14.x, 16.x ]
+        os: [ ubuntu-latest ]
+        node_version: [ 17.x ]
         protoc_version: [ 3.x ]
     steps:
       - name: Load project from cache
