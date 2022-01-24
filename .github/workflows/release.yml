@@ -52,50 +52,9 @@ jobs:
       - name: Run tests
         run: npm test
 
-  version:
-    name: Create version
+  publish:
+    name: Create and publish release
     needs: test
-    runs-on: ubuntu-latest
-    outputs:
-      version: ${{ steps.version.outputs.version }}
-    steps:
-      - name: Create version number
-        id: version
-        uses: codacy/git-version@2.4.0
-        with:
-          release-branch: main
-
-#  publish_git_tag:
-#    name: Push Git tag
-#    needs: version
-#    runs-on: ubuntu-latest
-#    steps:
-#      - name: Push git tag
-#        uses: hole19/git-tag-action@master
-#        env:
-#          TAG: ${{ needs.version.outputs.version }}
-#          GITHUB_TOKEN: ${{ github.token }}
-
-  publish_package_json:
-    name: Update package.json
-    needs: version
-    runs-on: ubuntu-latest
-    steps:
-      - name: Setup Node
-        uses: actions/setup-node@v2
-        with:
-          node-version: 16
-          registry-url: https://registry.npmjs.org/
-
-      - name: Update package.json
-        run: |
-          git config --global user.email "actions@github.com"
-          git config --global user.name "Github actions"
-          npm version ${{ needs.version.outputs.version }}
-
-  publish_github_release:
-    name: Create Github release
-    needs: version
     runs-on: ubuntu-latest
     steps:
       - name: Load project from cache
@@ -104,6 +63,18 @@ jobs:
         with:
           path: './*'
           key: ${{ github.sha }}
+
+      - name: Create version number
+        id: version
+        uses: codacy/git-version@2.4.0
+        with:
+          release-branch: main
+
+      - name: Update package.json
+        run: |
+          git config --global user.email "actions@github.com"
+          git config --global user.name "Github actions"
+          npm version ${{ steps.version.outputs.version }}
 
       - name: Zip project
         run: zip -r release.zip .
@@ -114,7 +85,7 @@ jobs:
         with:
           draft: false
           prerelease: false
-          release_name: ${{ needs.version.outputs.version }}
+          release_name: ${{ steps.version.outputs.version }}
           tag_name: ${{ github.ref }}
           body_path: CHANGELOG.md
         env:
