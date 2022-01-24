@@ -5,6 +5,7 @@
 //     MessageDeserializerStream,
 // } from '../src/stream.js';
 
+
 describe('Stream', () => {
     // const gen = async function *(): AsyncGenerator<string, void, undefined>
     // {
