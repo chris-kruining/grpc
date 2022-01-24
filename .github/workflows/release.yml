@@ -111,6 +111,6 @@ jobs:
           asset_content_type: application/gzip
 
       - name: Publish code to NPM
-        run: npm publish ./release.zip --tag=${{ steps.version.outputs.version }} --access=public
+        run: npm publish ./release.zip --access=public
         env:
           NODE_AUTH_TOKEN: ${{secrets.npm_token}}
