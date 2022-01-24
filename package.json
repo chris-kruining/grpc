@@ -2,7 +2,7 @@
     "name": "@fyn-software/grpc",
     "version": "1.0.0",
     "description": "",
-    "license": "reserverd",
+    "license": "MIT",
     "type": "module",
     "main": "./lib/index.js",
     "scripts": {
