@@ -42,7 +42,7 @@ jobs:
     strategy:
       matrix:
         os: [ ubuntu-latest ]
-        node_version: [ 17.x ]
+        node_version: [ 16.x ]
         protoc_version: [ 3.x ]
     steps:
       - name: Load project from cache
@@ -60,12 +60,6 @@ jobs:
     needs: test
     runs-on: ubuntu-latest
     steps:
-      - name: Setup Node
-        uses: actions/setup-node@v2
-        with:
-          node-version: 16
-          registry-url: https://registry.npmjs.org/
-
       - name: Load project from cache
         uses: actions/cache@v2
         id: restore-build
@@ -116,9 +110,9 @@ jobs:
           asset_name: release.zip
           asset_content_type: application/gzip
 
-      - run: echo "//registry.npmjs.org/:_authToken=${{ secrets.NPM_TOKEN }}" > ~/.npmrc
+#      - run: echo "//registry.npmjs.org/:_authToken=${{ secrets.NPM_TOKEN }}" > ~/.npmrc
 
       - name: Publish code to NPM
-        run: npm publish --access=public --registry=https://registry.npmjs.org
+        run: npm publish --access=public
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
