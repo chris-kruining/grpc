@@ -1,6 +1,6 @@
 {
     "name": "@fyn-software/grpc",
-    "version": "1.0.0",
+    "version": "${ PACKAGE_VERSION }",
     "description": "",
     "license": "MIT",
     "repository": {
