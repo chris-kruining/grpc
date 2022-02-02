@@ -78,7 +78,7 @@ export class NodeBody implements Body
     {
         if(this.#bodyUsed === true)
         {
-            // throw new TypeError(`body already used`);
+            throw new TypeError(`body already used`);
         }
 
         this.#bodyUsed = true;

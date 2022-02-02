@@ -1,5 +1,5 @@
 import { Message } from 'google-protobuf';
-import { asyncIterableToStream, streamToAsyncIterable, MessageSerializerStream, MessageDeserializerStream } from './stream.js';
+import { asyncIterableToStream, streamToAsyncIterable, PrefixerStream, DeprefixerStream, MessageSerializerStream, MessageDeserializerStream } from './stream.js';
 
 export interface MethodDefinition<RequestType, ResponseType, OutputRequestType=RequestType, OutputResponseType=ResponseType> {
     path: string;
@@ -80,27 +80,6 @@ export interface ClientConstructor
     new(address: string): Client
     readonly prototype: Client;
 }
-
-const prefixer = new TransformStream<Uint8Array, Uint8Array>({
-    transform(bytes: Uint8Array, controller: TransformStreamDefaultController<Uint8Array>)
-    {
-        const out = new ArrayBuffer(5 + bytes.length);
-        const view = new DataView(out);
-        // Set compressed flag
-        view.setUint8(0, +false);
-        // Set message byte length (encoded in big endian)
-        view.setUint32(0, bytes.length, false);
-
-        controller.enqueue(new Uint8Array(out));
-    },
-});
-
-const prefixCutter = new TransformStream<Uint8Array, Uint8Array>({
-    transform(bytes: Uint8Array, controller: TransformStreamDefaultController<Uint8Array>)
-    {
-        controller.enqueue(bytes.slice(3));
-    },
-});
 
 export abstract class AbstractClient
 {
@@ -200,7 +179,7 @@ export abstract class AbstractClient
 
         const response = await this.#fetcher(`${this.#address}${path}`, {
             method: 'POST',
-            body: this.#normalizePayload(payload).pipeThrough(prefixer),
+            body: this.#normalizePayload(payload).pipeThrough(new PrefixerStream()),
             headers: {
                 'Content-Type': 'application/grpc',
             },
@@ -212,7 +191,7 @@ export abstract class AbstractClient
             callback();
         }
 
-        return new Response(response.body!.pipeThrough(prefixCutter), response);
+        return new Response(response.body!.pipeThrough(new DeprefixerStream()), response);
     }
 
     #normalizePayload(payload: Payload): ReadableStream<Uint8Array>

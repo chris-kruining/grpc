@@ -31,8 +31,6 @@ export function asyncIterableToStream<T>(iterable: AsyncIterable<T>, signal?: Ab
     })
 }
 
-new AbortController
-
 export async function *streamToAsyncIterable<T>(stream: ReadableStream<T>, signal?: AbortSignal): AsyncGenerator<T, void, undefined>
 {
     const reader: ReadableStreamDefaultReader<T> = stream.getReader();
@@ -57,11 +55,41 @@ export async function *streamToAsyncIterable<T>(stream: ReadableStream<T>, signa
     }
 }
 
+export class PrefixerStream extends TransformStream<Uint8Array, Uint8Array> implements GenericTransformStream
+{
+    constructor()
+    {
+        super({
+            transform(bytes: Uint8Array, controller: TransformStreamDefaultController<Uint8Array>)
+            {
+                const out = new ArrayBuffer(5 + bytes.length);
+                const view = new DataView(out);
+                // Set compressed flag
+                view.setUint8(0, +false);
+                // Set message byte length (encoded in big endian)
+                view.setUint32(0, bytes.length, false);
+
+                controller.enqueue(new Uint8Array(out));
+            },
+        });
+    }
+}
+
+export class DeprefixerStream extends TransformStream<Uint8Array, Uint8Array> implements GenericTransformStream
+{
+    constructor()
+    {
+        super({
+            transform(bytes: Uint8Array, controller: TransformStreamDefaultController<Uint8Array>)
+            {
+                controller.enqueue(bytes.slice(3));
+            },
+        });
+    }
+}
+
 export class MessageSerializerStream<RequestType extends Message> extends TransformStream<RequestType, Uint8Array> implements GenericTransformStream
 {
-    readonly readable: ReadableStream<Uint8Array>;
-    readonly writable: WritableStream<RequestType>;
-
     constructor()
     {
         super({
@@ -70,17 +98,11 @@ export class MessageSerializerStream<RequestType extends Message> extends Transf
                 controller.enqueue(request.serializeBinary());
             }
         });
-
-        this.readable = new ReadableStream();
-        this.writable = new WritableStream();
     }
 }
 
 export class MessageDeserializerStream<ResponseType extends Message> extends TransformStream<Uint8Array, ResponseType> implements GenericTransformStream
 {
-    readonly readable: ReadableStream<ResponseType>;
-    readonly writable: WritableStream<Uint8Array>;
-
     constructor(deserializer: (data: Uint8Array) => Message)
     {
         super({
@@ -89,8 +111,5 @@ export class MessageDeserializerStream<ResponseType extends Message> extends Tra
                 controller.enqueue(deserializer(message) as ResponseType);
             }
         });
-
-        this.readable = new ReadableStream();
-        this.writable = new WritableStream();
     }
 }
