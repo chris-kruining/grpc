@@ -130,54 +130,38 @@ export class NodeBody implements Body
     }
 }
 
-// export class NodeHeaders implements Headers
-// {
-//     public append(name: string, value: string): void
-//     {
-//     }
-//
-//     public delete(name: string): void
-//     {
-//     }
-//
-//     public forEach(callbackfn: (value: string, key: string, parent: Headers) => void, thisArg?: any): void
-//     {
-//     }
-//
-//     public get(name: string): string | null
-//     {
-//         return null;
-//     }
-//
-//     public has(name: string): boolean
-//     {
-//         return false;
-//     }
-//
-//     public set(name: string, value: string): void
-//     {
-//     }
-//
-//     public [Symbol.iterator](): IterableIterator<[ string, string ]>
-//     {
-//         return undefined;
-//     }
-//
-//     public entries(): IterableIterator<[ string, string ]>
-//     {
-//         return undefined;
-//     }
-//
-//     public keys(): IterableIterator<string>
-//     {
-//         return undefined;
-//     }
-//
-//     public values(): IterableIterator<string>
-//     {
-//         return undefined;
-//     }
-// }
+export class NodeHeaders extends URLSearchParams implements Headers
+{
+    constructor(init?: HeadersInit)
+    {
+        if(init instanceof Headers)
+        {
+            init = [ ...init.entries() ];
+        }
+
+        super(init);
+    }
+
+    public append(name: string, value: string): void
+    {
+        super.append(name.toLowerCase(), value);
+    }
+
+    public delete(name: string): void
+    {
+        super.delete(name.toLowerCase());
+    }
+
+    public has(name: string): boolean
+    {
+        return super.has(name.toLowerCase());
+    }
+
+    public set(name: string, value: string): void
+    {
+        super.set(name.toLowerCase(), value);
+    }
+}
 
 export class NodeRequest extends NodeBody implements Request
 {

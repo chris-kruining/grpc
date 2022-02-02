@@ -5,12 +5,12 @@ const options = {
     outdir: 'lib',
     outbase: 'src',
     bundle: true,
-    sourcemap: true,
+    sourcemap: false,
     minify: false,
     format: 'esm',
     platform: 'node',
     inject: [ 'src/globals.ts' ],
-    external: [ 'node:stream/web' ],
+    // external: [ 'node:stream/web', 'node:http2' ],
     target: [ 'esnext' ],
 };
 
