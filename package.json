@@ -1,20 +1,24 @@
 {
     "name": "@fyn-software/grpc",
-    "version": "${ PACKAGE_VERSION }",
+    "version": "1.0.0",
     "description": "",
     "license": "MIT",
     "repository": {
         "type": "git",
         "url": "https://github.com/FYN-Software/grpc.git"
     },
-    "type": "module",
-    "main": "./lib/index.js",
+    "main": "./lib/cjs/index.js",
+    "exports": {
+        "node": "./lib/cjs/index.node.js",
+        "default": "./lib/esm/index.js"
+    },
     "scripts": {
         "build": "node ./esbuild.mjs && tsc --emitDeclarationOnly",
         "test": "jasmine"
     },
     "dependencies": {
-        "google-protobuf": "^3.19.3"
+        "google-protobuf": "^3.19.3",
+        "node-fetch": "^3.2.0"
     },
     "devDependencies": {
         "@types/google-protobuf": "3.15.5",

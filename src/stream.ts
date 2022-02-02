@@ -1,14 +1,5 @@
 import { Message } from 'google-protobuf';
 
-// if(typeof TransformStream === 'undefined')
-// {
-//     const { ReadableStream: Rs, WritableStream: Ws, TransformStream: Ts } = await import('node:stream/web');
-//
-//     global.ReadableStream = Rs as typeof ReadableStream;
-//     global.WritableStream = Ws as unknown as typeof WritableStream;
-//     global.TransformStream = Ts as unknown as typeof TransformStream;
-// }
-
 export function asyncIterableToStream<T>(iterable: AsyncIterable<T>, signal?: AbortSignal): ReadableStream<T>
 {
     return new ReadableStream<T>({
@@ -90,12 +81,12 @@ export class MessageDeserializerStream<ResponseType extends Message> extends Tra
     readonly readable: ReadableStream<ResponseType>;
     readonly writable: WritableStream<Uint8Array>;
 
-    constructor()
+    constructor(deserializer: (data: Uint8Array) => Message)
     {
         super({
             transform(message: Uint8Array, controller: TransformStreamDefaultController<ResponseType>)
             {
-                controller.enqueue(Message.deserializeBinary(message) as ResponseType);
+                controller.enqueue(deserializer(message) as ResponseType);
             }
         });
 

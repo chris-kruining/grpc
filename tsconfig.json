@@ -7,7 +7,7 @@
         "node_modules"
     ],
     "compilerOptions": {
-        "lib": [ "esnext", "dom" ],
+        "lib": [ "esnext", "dom", "dom.iterable" ],
         "module": "esnext",
         "target": "esnext",
         "esModuleInterop": true,
@@ -16,7 +16,6 @@
         "rootDir": "src",
         "strict": true,
         "sourceMap": true,
-        "declaration": true,
-        "declarationMap": true
+        "declaration": true
     },
 }
