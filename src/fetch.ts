@@ -1,4 +1,5 @@
 import { connect, constants } from 'node:http2';
+import { ClientHttp2Session } from 'http2';
 
 export class NodeBody implements Body
 {
@@ -349,6 +350,19 @@ export class NodeResponse extends NodeBody implements Response
     }
 }
 
+async function createClient(url: string): Promise<ClientHttp2Session>
+{
+    return new Promise((resolve, reject) => {
+        const client = connect(url);
+
+        client.on('error', e => {
+            reject(e);
+        });
+
+        resolve(client);
+    });
+}
+
 export async function fetch(input: RequestInfo, init?: RequestInit): Promise<Response>
 {
     const request = new Request(input, init);
@@ -366,13 +380,17 @@ export async function fetch(input: RequestInfo, init?: RequestInit): Promise<Res
         headers[k] = v;
     }
 
-    const client = connect(request.url);
+    const client = await createClient(request.url);
     const req = client.request(headers);
     req.setEncoding('utf-8');
 
     const resultStream = new ReadableStream<Uint8Array>({
         start(controller: ReadableStreamDefaultController<Uint8Array>)
         {
+            req.on('error', e => {
+                controller.error(e);
+            });
+
             req.on('data', chunk => controller.enqueue(encoder.encode(chunk)));
             req.on('end', () => {
                 controller.close();

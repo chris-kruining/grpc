@@ -177,14 +177,24 @@ export abstract class AbstractClient
 
         const { signal, callbacks } = this.#processCallOptions(options);
 
-        const response = await this.#fetcher(`${this.#address}${path}`, {
-            method: 'POST',
-            body: this.#normalizePayload(payload).pipeThrough(new PrefixerStream()),
-            headers: {
-                'Content-Type': 'application/grpc',
-            },
-            signal,
-        });
+        let response;
+        try
+        {
+            response = await this.#fetcher(`${this.#address}${path}`, {
+                method: 'POST',
+                body: this.#normalizePayload(payload).pipeThrough(new PrefixerStream()),
+                headers: {
+                    'Content-Type': 'application/grpc',
+                },
+                signal,
+            });
+        }
+        catch (e)
+        {
+            console.error(e);
+
+            throw new Error(`Network failed: '${(e as Error).message}'`)
+        }
 
         for(const callback of callbacks)
         {
