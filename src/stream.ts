@@ -77,14 +77,42 @@ export class PrefixerStream extends TransformStream<Uint8Array, Uint8Array> impl
 
 export class DeprefixerStream extends TransformStream<Uint8Array, Uint8Array> implements GenericTransformStream
 {
+    readonly #messageDelimiterSize = 4; // How many bytes it takes to encode the message length
+    readonly #headerSize = this.#messageDelimiterSize + 1; // Message length + compressed flag
+
     constructor()
     {
         super({
-            transform(bytes: Uint8Array, controller: TransformStreamDefaultController<Uint8Array>)
-            {
-                controller.enqueue(bytes.slice(3));
+            transform: (bytes: Uint8Array, controller: TransformStreamDefaultController<Uint8Array>) => {
+                const { compressed, length } = this.#readHeader(bytes);
+
+                const message = bytes.slice(this.#headerSize);
+
+                console.log(bytes, message, length, compressed)
+
+                controller.enqueue(message);
             },
         });
+    }
+
+    #readHeader(bytes: Uint8Array): { compressed: boolean, length: number }
+    {
+        const buffer = bytes.slice(0, this.#headerSize).buffer;
+        const view = new DataView(buffer);
+
+        const compressed = view.getUint8(0);
+        const length = view.getUint32(1, false);
+
+        // Make sure the compression flag is valid
+        if(compressed !== 0 && compressed !== 1)
+        {
+            throw new Error('Invalid compression flag')
+        }
+
+        return {
+            compressed: Boolean(compressed),
+            length,
+        };
     }
 }
 
