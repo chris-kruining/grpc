@@ -9,13 +9,14 @@
     "compilerOptions": {
         "lib": [ "esnext", "dom", "dom.iterable" ],
         "module": "esnext",
-        "target": "esnext",
         "esModuleInterop": true,
         "moduleResolution": "node",
-        "outDir": "lib",
+        "target": "esnext",
+        "outDir": "lib/type",
         "rootDir": "src",
         "strict": true,
         "sourceMap": true,
-        "declaration": true
+        "declaration": true,
+        "emitDeclarationOnly": true
     },
 }

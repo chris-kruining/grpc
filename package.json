@@ -12,8 +12,9 @@
         "node": "./lib/cjs/index.node.js",
         "default": "./lib/cjs/index.js"
     },
+    "types": "./lib/type",
     "scripts": {
-        "build": "node ./esbuild.mjs && tsc --emitDeclarationOnly",
+        "build": "node ./esbuild.mjs && tsc",
         "test": "jasmine"
     },
     "dependencies": {
