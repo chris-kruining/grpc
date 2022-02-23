@@ -62,14 +62,19 @@ export class PrefixerStream extends TransformStream<Uint8Array, Uint8Array> impl
         super({
             transform(bytes: Uint8Array, controller: TransformStreamDefaultController<Uint8Array>)
             {
-                const out = new ArrayBuffer(5 + bytes.length);
-                const view = new DataView(out);
+                const out = new Uint8Array(5 + bytes.length);
+                const view = new DataView(out.buffer);
+
                 // Set compressed flag
                 view.setUint8(0, +false);
-                // Set message byte length (encoded in big endian)
-                view.setUint32(0, bytes.length, false);
 
-                controller.enqueue(new Uint8Array(out));
+                // Set message byte length (encoded in big endian)
+                view.setUint32(1, bytes.length, false);
+
+                // copy message to `out`
+                out.set(bytes, 5);
+
+                controller.enqueue(out);
             },
         });
     }
@@ -82,17 +87,53 @@ export class DeprefixerStream extends TransformStream<Uint8Array, Uint8Array> im
 
     constructor()
     {
+        let buffer = new Uint8Array(0);
+
         super({
             transform: (bytes: Uint8Array, controller: TransformStreamDefaultController<Uint8Array>) => {
-                const { compressed, length } = this.#readHeader(bytes);
+                const data = new Uint8Array(buffer.length + bytes.length);
+                data.set(buffer);
+                data.set(bytes, buffer.length);
 
-                const message = bytes.slice(this.#headerSize);
+                const { message, length } = this.#readMessage(data);
 
-                console.log(bytes, message, length, compressed)
+                buffer = message ? data.slice(length) : data;
 
-                controller.enqueue(message);
+                if(message)
+                {
+                    controller.enqueue(message);
+                }
             },
         });
+    }
+
+    #readMessage(bytes: Uint8Array): { message: Uint8Array|undefined, length: number }
+    {
+        const { compressed, length } = this.#readHeader(bytes);
+
+        if(bytes.length < this.#headerSize + length)
+        {
+            return {
+                message: undefined,
+                length: 0,
+            };
+        }
+
+        const message = bytes.slice(this.#headerSize, this.#headerSize + length);
+
+        if(!compressed)
+        {
+            return {
+                message,
+                length: this.#headerSize + length,
+            };
+        }
+
+        //TODO(Chris Kruining) Implement decompression logic
+        return {
+            message: undefined,
+            length: 0,
+        };
     }
 
     #readHeader(bytes: Uint8Array): { compressed: boolean, length: number }
