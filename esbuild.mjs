@@ -1,27 +1,28 @@
-import { build } from 'esbuild';
+import { compile } from '@kruining/waterlogged';
 
-const options = {
-    entryPoints: [ 'src/index.ts', 'src/index.node.ts' ],
-    outdir: 'lib',
+await compile([ 'esm', 'cjs' ], {
+    entryPoints: [ './src/index.ts' ],
     outbase: 'src',
+    outdir: './lib/$format',
     bundle: true,
     sourcemap: true,
-    minify: true,
-    format: 'esm',
-    platform: 'node',
-    inject: [ 'src/globals.ts' ],
-    // external: [ 'node:stream/web', 'node:http2' ],
+    minify: false,
+    // platform: 'node',
+    // inject: [ 'src/globals.ts' ],
+    external: [ 'node:http2' ],
     target: [ 'esnext' ],
-};
-
-await build({
-    ...options,
-    outdir: 'lib/cjs',
-    format: 'cjs',
+    watch: process.argv[2] === 'watch',
 });
 
-await build({
-    ...options,
-    outdir: 'lib/esm',
-    format: 'esm',
+await compile([ 'esm', 'cjs' ], {
+    entryPoints: [ './src/index.node.ts' ],
+    outbase: 'src',
+    outdir: './lib/$format',
+    bundle: true,
+    sourcemap: true,
+    minify: false,
+    platform: 'node',
+    inject: [ 'src/globals.ts' ],
+    target: [ 'esnext' ],
+    watch: process.argv[2] === 'watch',
 });

@@ -8,24 +8,34 @@
         "url": "https://github.com/FYN-Software/grpc.git"
     },
     "main": "./lib/cjs/index.js",
+    "types": "./lib/type/index.d.ts",
     "exports": {
-        "node": "./lib/cjs/index.node.js",
-        "default": "./lib/cjs/index.js"
+        "require": {
+            "node": "./lib/cjs/index.node.js",
+            "default": "./lib/cjs/index.js"
+        },
+        "import": {
+            "node": "./lib/esm/index.node.js",
+            "default": "./lib/esm/index.js"
+        }
     },
-    "types": "./lib/type",
     "scripts": {
-        "build": "node ./esbuild.mjs && tsc",
+        "build:typed": "node ./esbuild.mjs && tsc",
+        "build": "node ./esbuild.mjs",
+        "dev": "node ./esbuild.mjs watch",
         "test": "jasmine"
     },
     "dependencies": {
         "google-protobuf": "^3.19.3"
     },
     "devDependencies": {
+        "@kruining/waterlogged": "1.1.7",
         "@types/google-protobuf": "3.15.5",
         "@types/jasmine": "4.0.3",
         "@types/node": "17.0.10",
         "esbuild": "0.14.36",
-        "jasmine": "4.1.0"
+        "jasmine": "4.1.0",
+        "typescript": "4.6.3"
     },
     "engines": {
         "node": ">=17.4.0"

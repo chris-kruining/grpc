@@ -1,5 +1,5 @@
 import { Message } from 'google-protobuf';
-import { asyncIterableToStream, streamToAsyncIterable, PrefixerStream, DeprefixerStream, MessageSerializerStream, MessageDeserializerStream } from './stream.js';
+import { asyncIterableToStream, streamToAsyncIterable, EncoderStream, DecoderStream, MessageSerializerStream, MessageDeserializerStream } from './stream.js';
 
 export interface MethodDefinition<RequestType, ResponseType, OutputRequestType=RequestType, OutputResponseType=ResponseType> {
     path: string;
@@ -182,7 +182,7 @@ export abstract class AbstractClient
         {
             response = await this.#fetcher(`${this.#address}${path}`, {
                 method: 'POST',
-                body: this.#normalizePayload(payload).pipeThrough(new PrefixerStream()),
+                body: this.#normalizePayload(payload).pipeThrough(new EncoderStream()),
                 headers: {
                     'Content-Type': 'application/grpc',
                 },
@@ -201,7 +201,7 @@ export abstract class AbstractClient
             callback();
         }
 
-        return new Response(response.body!.pipeThrough(new DeprefixerStream()), response);
+        return new Response(response.body!.pipeThrough(new DecoderStream()), response);
     }
 
     #normalizePayload(payload: Payload): ReadableStream<Uint8Array>

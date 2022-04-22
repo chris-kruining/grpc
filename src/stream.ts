@@ -55,7 +55,7 @@ export async function *streamToAsyncIterable<T>(stream: ReadableStream<T>, signa
     }
 }
 
-export class PrefixerStream extends TransformStream<Uint8Array, Uint8Array> implements GenericTransformStream
+export class EncoderStream extends TransformStream<Uint8Array, Uint8Array> implements GenericTransformStream
 {
     constructor()
     {
@@ -80,7 +80,7 @@ export class PrefixerStream extends TransformStream<Uint8Array, Uint8Array> impl
     }
 }
 
-export class DeprefixerStream extends TransformStream<Uint8Array, Uint8Array> implements GenericTransformStream
+export class DecoderStream extends TransformStream<Uint8Array, Uint8Array> implements GenericTransformStream
 {
     readonly #messageDelimiterSize = 4; // How many bytes it takes to encode the message length
     readonly #headerSize = this.#messageDelimiterSize + 1; // Message length + compressed flag
