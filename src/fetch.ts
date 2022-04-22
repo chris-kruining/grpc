@@ -367,7 +367,6 @@ export async function fetch(input: RequestInfo, init?: RequestInit): Promise<Res
 {
     const request = new Request(input, init);
     const url = new URL(request.url);
-    const encoder = new TextEncoder();
 
     const headers: Record<string, string> = {
         [constants.HTTP2_HEADER_SCHEME]: 'https',
@@ -382,7 +381,7 @@ export async function fetch(input: RequestInfo, init?: RequestInit): Promise<Res
 
     const client = await createClient(request.url);
     const req = client.request(headers);
-    req.setEncoding('utf-8');
+    req.setEncoding('binary');
 
     const resultStream = new ReadableStream<Uint8Array>({
         start(controller: ReadableStreamDefaultController<Uint8Array>)
@@ -391,7 +390,9 @@ export async function fetch(input: RequestInfo, init?: RequestInit): Promise<Res
                 controller.error(e);
             });
 
-            req.on('data', chunk => controller.enqueue(encoder.encode(chunk)));
+            req.on('data', chunk => {
+                controller.enqueue(Uint8Array.from(chunk, (c: string) => c.charCodeAt(0)))
+            });
             req.on('end', () => {
                 controller.close();
                 client.close();
