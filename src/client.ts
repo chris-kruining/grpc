@@ -107,8 +107,11 @@ export abstract class AbstractClient
             metadata,
             options,
         );
+        const message = responseType.deserializeBinary(new Uint8Array(await response.arrayBuffer())) as ResponseType;
 
-        return responseType.deserializeBinary(new Uint8Array(await response.arrayBuffer())) as ResponseType;
+        injectMetadata(message, { headers: response.headers });
+
+        return message;
     }
 
     async makeClientStreamRequest<RequestType extends Message, ResponseType extends Message>(
@@ -125,8 +128,11 @@ export abstract class AbstractClient
             metadata,
             options,
         );
+        const message = responseType.deserializeBinary(new Uint8Array(await response.arrayBuffer())) as ResponseType;
 
-        return responseType.deserializeBinary(new Uint8Array(await response.arrayBuffer())) as ResponseType;
+        injectMetadata(message, { headers: response.headers });
+
+        return message;
     }
 
     async *makeServerStreamRequest<RequestType extends Message, ResponseType extends Message>(
@@ -137,15 +143,22 @@ export abstract class AbstractClient
         metadata?: Metadata,
         options?: CallOptions,
     ): AsyncGenerator<ResponseType, void, undefined> {
-        yield Promise.resolve(undefined as unknown as ResponseType);
-        const { body } = await this.#fetch<RequestType, ResponseType>(
+        const { body, headers } = await this.#fetch<RequestType, ResponseType>(
             path,
             request.serializeBinary(),
             metadata,
             options,
         );
+        const messages = streamToAsyncIterable(
+            body!.pipeThrough(new MessageDeserializerStream<ResponseType>(responseType.deserializeBinary))
+        );
 
-        yield* streamToAsyncIterable(body!.pipeThrough(new MessageDeserializerStream<ResponseType>(responseType.deserializeBinary)));
+        for await (const message of messages)
+        {
+            injectMetadata(message, { headers });
+
+            yield message;
+        }
     }
 
     async *makeBidiStreamRequest<RequestType extends Message, ResponseType extends Message>(
@@ -156,14 +169,22 @@ export abstract class AbstractClient
         metadata?: Metadata,
         options?: CallOptions,
     ): AsyncGenerator<ResponseType, void, undefined> {
-        const { body } = await this.#fetch<RequestType, ResponseType>(
+        const { body, headers } = await this.#fetch<RequestType, ResponseType>(
             path,
             asyncIterableToStream(requests).pipeThrough(new MessageSerializerStream()),
             metadata,
             options,
         );
+        const messages = streamToAsyncIterable(
+            body!.pipeThrough(new MessageDeserializerStream<ResponseType>(responseType.deserializeBinary))
+        );
 
-        yield* streamToAsyncIterable(body!.pipeThrough(new MessageDeserializerStream<ResponseType>(responseType.deserializeBinary)));
+        for await (const message of messages)
+        {
+            injectMetadata(message, { headers });
+
+            yield message;
+        }
     }
 
     async #fetch<RequestType extends Message, ResponseType extends Message>(
@@ -255,5 +276,17 @@ export function clientWithFetcher(fetch: Fetcher): ClientConstructor
         {
             super(address, fetch);
         }
+    }
+}
+
+function injectMetadata(message: Message, metadata: Record<string, any>): void
+{
+    for(const [ key, value ] of Object.entries(metadata))
+    {
+        Object.defineProperty(message, `__${key}__`, {
+            value,
+            writable: false,
+            enumerable: false,
+        })
     }
 }

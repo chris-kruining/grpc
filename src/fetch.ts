@@ -1,5 +1,5 @@
 import { connect, constants } from 'node:http2';
-import { ClientHttp2Session } from 'http2';
+import { ClientHttp2Session, IncomingHttpHeaders, IncomingHttpStatusHeader } from 'http2';
 
 export class NodeBody implements Body
 {
@@ -141,6 +141,18 @@ export class NodeHeaders extends URLSearchParams implements Headers
         }
 
         super(init);
+    }
+
+    public get(name: string): string|null
+    {
+        const values = super.getAll(name);
+
+        if(values.length === 0)
+        {
+            return null;
+        }
+
+        return values.join(', ');
     }
 
     public append(name: string, value: string): void
@@ -379,6 +391,7 @@ export async function fetch(input: RequestInfo, init?: RequestInit): Promise<Res
         headers[k] = v;
     }
 
+    const [ responseHeaders, setResponseHeaders ] = promisedValue<Record<string, any>>();
     const client = await createClient(request.url);
     const req = client.request(headers);
     req.setEncoding('binary');
@@ -390,6 +403,10 @@ export async function fetch(input: RequestInfo, init?: RequestInit): Promise<Res
                 controller.error(e);
             });
 
+            req.on('response', (headers: IncomingHttpHeaders&IncomingHttpStatusHeader, flags: number) => {
+                // NOTE(Chris Kruining) The conversion to and from entries is to filter out the symbol entries
+                setResponseHeaders(Object.fromEntries(Object.entries(headers)));
+            });
             req.on('data', chunk => {
                 controller.enqueue(Uint8Array.from(chunk, (c: string) => c.charCodeAt(0)))
             });
@@ -426,5 +443,13 @@ export async function fetch(input: RequestInfo, init?: RequestInit): Promise<Res
 
     req.end();
 
-    return new Response(resultStream);
+    return new Response(resultStream, { headers: await responseHeaders });
+}
+
+function promisedValue<T>(): [ Promise<T>, (value: T) => void ]
+{
+    let resolver!: (value: T) => void;
+    const promise = new Promise<T>(res => resolver = res);
+
+    return [ promise, resolver ];
 }
