@@ -375,75 +375,109 @@ async function createClient(url: string): Promise<ClientHttp2Session>
     });
 }
 
-export async function fetch(input: RequestInfo, init?: RequestInit): Promise<Response>
+export function fetch(input: RequestInfo, init?: RequestInit): Promise<Response>
 {
-    const request = new Request(input, init);
-    const url = new URL(request.url);
+    return new Promise<Response>(async (resolve, reject) => {
+        const request = new Request(input, init);
+        const url = new URL(request.url);
+        const { signal } = init ?? {};
 
-    const headers: Record<string, string> = {
-        [constants.HTTP2_HEADER_SCHEME]: 'https',
-        [constants.HTTP2_HEADER_METHOD]: request.method,
-        [constants.HTTP2_HEADER_PATH]: url.pathname,
-    };
+        const abort = () => {
+            const reason = 'request aborted';
 
-    for(const [ k, v ] of request.headers.entries())
-    {
-        headers[k] = v;
-    }
+            console.log('KAAS');
 
-    const [ responseHeaders, setResponseHeaders ] = promisedValue<Record<string, any>>();
-    const client = await createClient(request.url);
-    const req = client.request(headers);
-    req.setEncoding('binary');
+            request.body?.cancel(reason);
+            resultStream?.cancel(reason);
 
-    const resultStream = new ReadableStream<Uint8Array>({
-        start(controller: ReadableStreamDefaultController<Uint8Array>)
+            // req.destroy(new Error(reason));
+        };
+
+        if(signal)
         {
-            req.on('error', e => {
-                controller.error(e);
-            });
-
-            req.on('response', (headers: IncomingHttpHeaders&IncomingHttpStatusHeader, flags: number) => {
-                // NOTE(Chris Kruining) The conversion to and from entries is to filter out the symbol entries
-                setResponseHeaders(Object.fromEntries(Object.entries(headers)));
-            });
-            req.on('data', chunk => {
-                controller.enqueue(Uint8Array.from(chunk, (c: string) => c.charCodeAt(0)))
-            });
-            req.on('end', () => {
-                controller.close();
-                client.close();
-            });
-        },
-    });
-
-    const reader = request.body?.getReader();
-
-    if(reader !== undefined)
-    {
-        try
-        {
-            while(true)
+            if(signal.aborted)
             {
-                const { done, value } = await reader.read();
-
-                if(done)
-                {
-                    break;
-                }
-
-                req.write(Buffer.from(value!));
+                abort();
+            }
+            else
+            {
+                signal.addEventListener('abort', abort, { once: true });
             }
         }
-        finally
+
+        const headers: Record<string, string> = {
+            [constants.HTTP2_HEADER_SCHEME]: 'https',
+            [constants.HTTP2_HEADER_METHOD]: request.method,
+            [constants.HTTP2_HEADER_PATH]: url.pathname,
+        };
+
+        for(const [ k, v ] of request.headers.entries())
         {
-            reader.releaseLock();
+            headers[k] = v;
         }
-    }
 
-    req.end();
+        const [ responseHeaders, setResponseHeaders ] = promisedValue<Record<string, any>>();
+        const client = await createClient(request.url);
+        const req = client.request(headers);
+        req.setEncoding('binary');
 
-    return new Response(resultStream, { headers: await responseHeaders });
+        const resultStream = new ReadableStream<Uint8Array>({
+            start(controller: ReadableStreamDefaultController<Uint8Array>)
+            {
+                const c = () => controller.desiredSize === 1 ? controller : undefined;
+
+                req.on('error', e => {
+                    signal?.removeEventListener('abort', abort);
+
+                    req.destroy(e);
+
+                    controller.error(e);
+
+                    reject(e);
+                });
+
+                req.on('response', (headers: IncomingHttpHeaders&IncomingHttpStatusHeader, flags: number) => {
+                    // NOTE(Chris Kruining) The conversion to and from entries is to filter out the symbol entries
+                    setResponseHeaders(Object.fromEntries(Object.entries(headers)));
+                });
+                req.on('data', chunk => c()?.enqueue(Uint8Array.from(chunk, (c: string) => c.charCodeAt(0))));
+                req.on('end', () => {
+                    signal?.removeEventListener('abort', abort);
+
+                    c()?.close();
+                    client.close();
+                });
+            },
+        });
+
+        const reader = request.body?.getReader();
+
+        if(reader !== undefined)
+        {
+            try
+            {
+                while(true)
+                {
+                    const { done, value } = await reader.read();
+
+                    if(done)
+                    {
+                        break;
+                    }
+
+                    req.write(Buffer.from(value!));
+                }
+            }
+            finally
+            {
+                reader.releaseLock();
+            }
+        }
+
+        req.end();
+
+        resolve(new Response(resultStream, { headers: await responseHeaders }));
+    });
 }
 
 function promisedValue<T>(): [ Promise<T>, (value: T) => void ]

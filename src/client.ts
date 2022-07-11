@@ -1,5 +1,6 @@
 import { Message } from 'google-protobuf';
 import { asyncIterableToStream, streamToAsyncIterable, EncoderStream, DecoderStream, MessageSerializerStream, MessageDeserializerStream } from './stream.js';
+import * as abort from './abort.js';
 
 export interface MethodDefinition<RequestType, ResponseType, OutputRequestType=RequestType, OutputResponseType=ResponseType> {
     path: string;
@@ -212,8 +213,6 @@ export abstract class AbstractClient
         }
         catch (e)
         {
-            console.error(e);
-
             throw new Error(`Network failed: '${(e as Error).message}'`)
         }
 
@@ -222,7 +221,7 @@ export abstract class AbstractClient
             callback();
         }
 
-        return new Response(response.body!.pipeThrough(new DecoderStream()), response);
+        return new Response(response.body?.pipeThrough(new DecoderStream()), response);
     }
 
     #normalizePayload(payload: Payload): ReadableStream<Uint8Array>
@@ -241,28 +240,35 @@ export abstract class AbstractClient
         });
     }
 
-    #processCallOptions(options: CallOptions): { callbacks: Function[] }&Pick<RequestInit, 'signal'>
+    #processCallOptions(options: CallOptions): { callbacks: Function[], signal: AbortSignal }
     {
         let { deadline, signal } = options;
         const callbacks = [];
+        const signals: AbortSignal[] = [];
 
-        signal ??= this.#controller.signal;
+        if(signal)
+        {
+            signals.push(signal);
+        }
 
         if(deadline)
         {
+            const controller = new AbortController();
+
             if(deadline instanceof Date)
             {
-                const now = new Date().getTime()
+                const now = new Date().getTime();
                 deadline = Math.max(Math.ceil(deadline.getTime() - now), 0);
             }
 
-            const handle = setTimeout(() => {}, deadline);
+            const handle = setTimeout(() => controller.abort(), deadline);
 
             callbacks.push(() => clearTimeout(handle));
+            signals.push(controller.signal);
         }
 
         return {
-            signal,
+            signal: abort.race(...signals),
             callbacks,
         };
     }
