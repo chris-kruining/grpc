@@ -1,13 +1,13 @@
 name: Release
 
-concurrency:
-  group: '${{ github.head_ref }}'
-  cancel-in-progress: true
-
 on:
   push:
     branches:
       - "main"
+
+concurrency:
+  group: ${{ github.ref || github.run_id }}
+  cancel-in-progress: true
 
 jobs:
   build:
