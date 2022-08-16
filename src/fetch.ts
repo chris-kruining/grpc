@@ -385,12 +385,8 @@ export function fetch(input: RequestInfo, init?: RequestInit): Promise<Response>
         const abort = () => {
             const reason = 'request aborted';
 
-            console.log('KAAS');
-
             request.body?.cancel(reason);
             resultStream?.cancel(reason);
-
-            // req.destroy(new Error(reason));
         };
 
         if(signal)
