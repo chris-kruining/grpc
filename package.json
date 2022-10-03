@@ -1,11 +1,11 @@
 {
-    "name": "@fyn-software/grpc",
+    "name": "@kruining/grpc",
     "version": "1.0.0",
     "description": "",
     "license": "MIT",
     "repository": {
         "type": "git",
-        "url": "https://github.com/FYN-Software/grpc.git"
+        "url": "https://github.com/chris-kruining/grpc.git"
     },
     "main": "./lib/cjs/index.js",
     "types": "./lib/type/index.d.ts",
