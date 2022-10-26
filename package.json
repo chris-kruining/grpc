@@ -11,11 +11,9 @@
     "types": "./lib/type/index.d.ts",
     "exports": {
         "require": {
-            "node": "./lib/cjs/index.node.js",
             "default": "./lib/cjs/index.js"
         },
         "import": {
-            "node": "./lib/esm/index.node.js",
             "default": "./lib/esm/index.js"
         }
     },
