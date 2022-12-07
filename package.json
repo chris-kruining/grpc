@@ -27,7 +27,7 @@
         "google-protobuf": "^3.19.3"
     },
     "devDependencies": {
-        "@kruining/waterlogged": "1.1.38",
+        "@kruining/waterlogged": "1.1.39",
         "@types/google-protobuf": "3.15.6",
         "@types/jasmine": "4.3.0",
         "@types/node": "18.11.9",
